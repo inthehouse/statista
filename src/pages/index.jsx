@@ -1,43 +1,31 @@
-import React, { Component } from 'react';
-
-import axios from 'axios';
-
+import React from 'react';
+import { useQuery } from 'react-query';
 import SearchBar from '../components/SearchBar';
 
-class IndexPage extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            statistics: [],
-            isLoading: true,
-        };
-    }
-
-    async componentDidMount() {
-        await this.fetchStatistics('');
-    }
-
-    fetchStatistics = async () => {
-        try {
-            const response = await axios.get('https://cdn.statcdn.com/static/application/search_results.json');
-            const data = response.data.items ? response.data.items : [];
-
-            this.setState({
-                statistics: data,
-            });
-        } catch (error) {
-            console.error('Error fetching statistics:', error);
+const IndexPage = () => {
+    const fetchStatistics = async () => {
+        const response = await fetch('https://cdn.statcdn.com/static/application/search_results.json');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
+        return response.json();
     };
 
-    render() {
-        const { statistics } = this.state;
-        return (
-            <div className="container mx-auto p-4">
-                <SearchBar data={statistics} />
-            </div>
-        );
+    const { data: statistics, isLoading, isError } = useQuery('statistics', fetchStatistics);
+
+    if (isLoading) {
+        return <div>Loading...</div>;
     }
-}
+
+    if (isError) {
+        return <div>Error fetching data</div>;
+    }
+
+    return (
+        <div className="container mx-auto p-4">
+            <SearchBar data={statistics.items} />
+        </div>
+    );
+};
 
 export default IndexPage;
